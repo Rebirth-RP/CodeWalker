@@ -615,6 +615,12 @@ namespace CodeWalker.Project.Panels
             ProjectForm.AddCollisionPolyToProject();
         }
 
+        private void SelectConnectedVertices_Click(object sender, EventArgs e)
+        {
+            ProjectForm.SetProjectItem(CollisionPoly);
+            ProjectForm.DeleteAttachedCollisionPoly();
+        }
+
         private void DeleteButton_Click(object sender, EventArgs e)
         {
             ProjectForm.SetProjectItem(CollisionPoly);

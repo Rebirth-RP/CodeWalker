@@ -85,6 +85,7 @@
             this.MatTypeCombo = new System.Windows.Forms.ComboBox();
             this.label20 = new System.Windows.Forms.Label();
             this.DeleteButton = new System.Windows.Forms.Button();
+            this.SelectConnectedVerticesButton = new System.Windows.Forms.Button();
             this.AddToProjectButton = new System.Windows.Forms.Button();
             this.PolyTabControl.SuspendLayout();
             this.TriangleTabPage.SuspendLayout();
@@ -716,6 +717,18 @@
             this.label20.Size = new System.Drawing.Size(47, 13);
             this.label20.TabIndex = 19;
             this.label20.Text = "Material:";
+            //
+            // Select connected vertices button.
+            //
+            this.SelectConnectedVerticesButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.SelectConnectedVerticesButton.Location = new System.Drawing.Point(208, 7);
+            this.SelectConnectedVerticesButton.Name = "SelectConnectedVertices";
+            this.SelectConnectedVerticesButton.Size = new System.Drawing.Size(120, 23);
+            this.SelectConnectedVerticesButton.TabIndex = 37;
+            this.SelectConnectedVerticesButton.Text = "Delete Connected";
+            this.SelectConnectedVerticesButton.UseVisualStyleBackColor = true;
+            this.SelectConnectedVerticesButton.Click += new System.EventHandler(this.SelectConnectedVertices_Click);
+
             // 
             // DeleteButton
             // 
@@ -745,6 +758,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(565, 505);
             this.Controls.Add(this.DeleteButton);
+            this.Controls.Add(this.SelectConnectedVerticesButton);
             this.Controls.Add(this.AddToProjectButton);
             this.Controls.Add(this.MaterialTabControl);
             this.Controls.Add(this.PolyTabControl);
@@ -832,6 +846,7 @@
         private System.Windows.Forms.CheckedListBox MatFlagsCheckedListBox;
         private System.Windows.Forms.CheckBox UpdateSharedMaterialCheckBox;
         private System.Windows.Forms.Button DeleteButton;
+        private System.Windows.Forms.Button SelectConnectedVerticesButton;
         private System.Windows.Forms.Button AddToProjectButton;
     }
 }

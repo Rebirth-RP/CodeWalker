@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Markup;
+using System.Xml.Linq;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace CodeWalker.Project
@@ -4470,6 +4473,127 @@ namespace CodeWalker.Project
             catch
             { }
         }
+
+        public BoundPolygon ProcessEdgeVert (string edge, string vert, Dictionary<ushort, bool> processedIndexes, BoundPolygonTriangle polyTriangle)
+        {
+            Type objectType = polyTriangle.GetType();
+            ushort edgeIndex;
+            try
+            {
+                edgeIndex = (ushort)objectType.GetProperty(edge).GetValue(polyTriangle);
+            }
+            catch
+            {
+                return null;
+            }
+            if (edgeIndex == 65535) return null;
+            if (processedIndexes.ContainsKey(edgeIndex)) return null;
+
+            int vertIndex;
+            try
+            {
+                vertIndex = (int)objectType.GetProperty(vert).GetValue(polyTriangle);
+            } catch
+            {
+                return null;
+            }
+
+            var vertObject= CurrentCollisionPoly.Owner.GetVertexObject(vertIndex);
+            var vertPolygons = vertObject.Owner.Polygons;
+
+            for (int i = 0; i < vertPolygons.Length; i++)
+            {
+                var polygon = vertPolygons[i];
+                if (polygon.Index == edgeIndex)
+                {
+                    processedIndexes.Add(edgeIndex, true);
+                    return polygon;
+                }
+            }
+
+            return null;
+        }
+
+        public void GetAttachedIndexes(List<BoundPolygon> toDelete, Dictionary<ushort, bool> processedIndexes, BoundPolygonTriangle polyTriangle)
+        {
+            var attached1 = ProcessEdgeVert("edgeIndex1", "vertIndex1", processedIndexes, polyTriangle);
+            if (attached1 != null)
+            {
+                toDelete.Add(attached1);
+                GetAttachedIndexes(toDelete, processedIndexes, attached1 as BoundPolygonTriangle);
+            }
+
+            var attached2 = ProcessEdgeVert("edgeIndex2", "vertIndex2", processedIndexes, polyTriangle);
+            if (attached2 != null)
+            {
+                toDelete.Add(attached2);
+                GetAttachedIndexes(toDelete, processedIndexes, attached2 as BoundPolygonTriangle);
+            }
+
+            var attached3 = ProcessEdgeVert("edgeIndex3", "vertIndex3", processedIndexes, polyTriangle);
+            if (attached3 != null)
+            {
+                toDelete.Add(attached3);
+                GetAttachedIndexes(toDelete, processedIndexes, attached3 as BoundPolygonTriangle);
+            }
+        }
+
+
+        public bool DeleteAttachedCollisionPoly()
+        {
+            if (CurrentCollisionBounds == null) return false;
+            if (CurrentCollisionPoly == null) return false;
+            if (CurrentYbnFile == null) return false;
+            if (CurrentCollisionPoly.Owner != CurrentCollisionBounds) return false;
+
+            var polyTriangle = CurrentCollisionPoly as BoundPolygonTriangle;
+
+            Dictionary<ushort, bool> processedIndexes = new Dictionary<ushort, bool>();
+            List<BoundPolygon> toDelete = new List<BoundPolygon>();
+            toDelete.Add(CurrentCollisionPoly);
+
+            GetAttachedIndexes(toDelete, processedIndexes, polyTriangle);
+
+            var delp = CurrentCollisionPoly;
+            for (int i = 0; i < toDelete.Count; i++)
+            {
+                var polyToDelete = toDelete[i];
+                bool res = false;
+                if (WorldForm != null)
+                {
+                    lock (WorldForm.RenderSyncRoot) //don't try to do this while rendering...
+                    {
+                        res = polyToDelete.Owner.DeletePolygon(polyToDelete);
+                    }
+                }
+                else
+                {
+                    res = polyToDelete.Owner.DeletePolygon(polyToDelete);
+                }
+
+                if (WorldForm != null)
+                {
+                    
+                    WorldForm.UpdateCollisionBoundsGraphics(polyToDelete.Owner);
+                }
+            }
+
+            ProjectExplorer?.SetYbnHasChanged(CurrentYbnFile, true);
+
+            ClosePanel((EditYbnBoundPolyPanel p) => { return p.Tag == delp; });
+
+            CurrentCollisionPoly = null;
+
+            if (WorldForm != null)
+            {
+                WorldForm.Refresh();
+                WorldForm.UpdateCollisionBoundsGraphics(CurrentCollisionBounds);
+                WorldForm.SelectItem(null);
+            }
+
+            return true;
+        }
+
         public bool DeleteCollisionPoly()
         {
             if (CurrentCollisionBounds == null) return false;
